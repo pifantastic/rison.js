@@ -80,25 +80,25 @@ define(function() {
   })();
 
   /**
-   * this is like encodeURIComponent() but quotes fewer characters.
+   * uri-encode a string, using a tolerant url encoder.
    *
    * @see rison.uri_ok
-   *
-   * encodeURIComponent passes   ~!*()-_.'
-   * rison.quote also passes   ,:@$/
-   *   and quotes " " as "+" instead of "%20"
    */
-  rison.quote = function(x) {
-      if (/^[\-A-Za-z0-9~!*()_.',:@$\/]*$/.test(x))
+  rison.quote = function (x) {
+      // speedups todo:
+      //   regex match exact set of uri_ok chars.
+      //   chunking series of unsafe chars rather than encoding char-by-char
+      var ok = rison.uri_ok;
+
+      if (/^[A-Za-z0-9_-]*$/.test(x))  // XXX add more safe chars
           return x;
 
-      return encodeURIComponent(x)
-          .replace(new RegExp('%2C', 'g'), ',')
-          .replace(new RegExp('%3A', 'g'), ':')
-          .replace(new RegExp('%40', 'g'), '@')
-          .replace(new RegExp('%24', 'g'), '$')
-          .replace(new RegExp('%2F', 'g'), '/')
-          .replace(new RegExp('%20', 'g'), '+');
+      x = x.replace(/([^A-Za-z0-9_-])/g, function(a, b) {
+          var c = ok[b];
+          if (c) return b;
+          return encodeURIComponent(b);
+      });
+      return x.replace(/%20/g, '+');
   };
 
 
